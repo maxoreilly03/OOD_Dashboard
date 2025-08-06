@@ -1,3 +1,4 @@
+## Loading Packages In
 library(shiny)
 library(bslib)
 library(maps)
@@ -10,13 +11,16 @@ library(dplyr)
 source("helpers.R")
 counties <- readRDS("data/counties.rds")
 
-
+## Loading in data from ArcGIS Online
 statesST <- st_read("https://services3.arcgis.com/iuNbZYJOrAYBrPyC/ArcGIS/rest/services/States_forR/FeatureServer/0/query?where=1=1&outFields=*&f=geojson")
+statesWikiTest <- read.csv("/Users/maxoreilly/Desktop/opioidDataDashboard/myApp/OODAttempt_oneFile/App-1/us_states_wikipedia_links.csv")
 statesMerged <- left_join(statesST, statesWikiTest, by = c("NAME" = "State"))
 labels = sprintf("<strong>%s</strong><br/><a href='%s' target='_blank'>Link to Wikipedia Page</a>",
                  statesMerged$NAME, statesMerged$Wikipedia_Link) %>% lapply(htmltools::HTML)
 
-statesWikiTest <- read.csv("/Users/maxoreilly/Desktop/opioidDataDashboard/myApp/OODAttempt_oneFile/App-1/us_states_wikipedia_links.csv")
+## Loading in Image
+image_path_1 <- "/Users/maxoreilly/Desktop/opioidDataDashboard/myApp/OODAttempt_oneFile/App-1/Figures/Average\ Drive\ Time\ for\ Methadone\ Provider\ -\ 2020.png"
+image_path_2 <- "/Users/maxoreilly/Desktop/opioidDataDashboard/myApp/OODAttempt_oneFile/App-1/Figures/SAMSHAOTPs.png"
 
 
 
@@ -31,36 +35,30 @@ my_theme <- bs_theme(
 ## UI START ##
 ui <- page_navbar(
   theme = my_theme,
-  title = "This is the first website I've ever made!",
-  # sidebar = sidebar("Sidebar"),
+  title = "Opioid Overdose & Treatment Access Dashboard - TUSM",
   inverse = TRUE,
   nav_panel(
     title = "Splash Page",
-    p("Here's where you'd find information on how to use the dashboard!"),
+    p("Welcome to the dashboard"),
     card(
       layout_sidebar(
         sidebar = sidebar(
                           helpText(
-                              "Create demographic maps with information from the 2010 US census."
-                          ),
-                          
-                          selectInput(
-                            "var",
-                            "Choose a variable to display",
-                            choices = c("Percent White", "Percent Black", "Percent Hispanic", "Percent Asian"),
-                            selected = "Percent White"
-                          ),
-                          
-                          sliderInput(
-                            "vals",
-                            "Range of Interest",
-                            min = 0,
-                            max = 100,
-                            value = c(0,100)
+                              "Helper Text."
                           ),
       ),
       card(
-        plotOutput("map")
+        card_header("Information about the dashboard"),
+        helpText(
+          "The opioid overdose epidemic continues to be one of the largest American public health crises of the 21st century. Between 2002 and 2022, opioid-related overdose deaths nearly quadrupled; an estimated 81,083 opioid-related overdose deaths occurred in 2023 [1]. Between 6.7 and 7.6 million people lived with opioid use disorder (OUD) nationwide in 2019 [2]. However, a minority of those with OUD receive treatment, with estimates ranging from 8% [3] to 25% [4], a figure that is lower among uninsured and minority communities [5]. "
+        ),
+        helpText(
+          "To treat OUD and mitigate the risk of opioid-related overdose deaths, medications for opioid use disorder such as methadone are first line treatment [7]. Methadone treatment is highly effective, decreasing opioid-related overdose deaths by 59% during the 12-month period following a nonfatal overdose [8]. Yet, methadone is accessible almost exclusively via opioid treatment programs (OTPs) [9] [10] [11]. Among myriad barriers to accessing methadone treatment, travel time can be considerable, as most patients must travel to an OTP in-person every day to receive treatment [12]. Indeed, patients who traveled less than a mile to an OTP were 50% more likely to continue treatment compared to those traveling longer distances [13]."
+        ),
+        helpText(
+          "This dashboard combines data from various publicly available sources to show areas that are disproportionately impacted by the opioid crisis or have low or inequitable access to harm reduction and treatment services. Using tabs at the top, you can explore trends in fatal and non-fatal overdose, access to services, etc."
+        ),
+        ## scrolling info about different aspects of OOD crisis. 
       )
     )
     )
@@ -69,8 +67,61 @@ ui <- page_navbar(
   nav_panel(
     title = "Graphs", 
     p("Graphs of OOD"),
+    navset_card_tab(
+      height = 450,
+      nav_panel(
+        "Graph",
+        card_title("graph showing MOUD access"),
+        card_image(
+          file = image_path_1,
+                   height = 400,
+                   width = 500)
+      ),
+      nav_panel(
+        "Map",
+        card_title("Map showing MOUD access"),
+        card_image(
+          file = image_path_2,
+          height = 400,
+          width = 500),
+      ),
+      #card_header(
+      #  "how do we make this look not ridiculous"
+      #),
+      
+    )
     
   ),
+  # nav_panel(
+   # title = "Census Data Tutorial",
+  #  card(
+      #layout_sidebar(
+        #sidebar = sidebar(
+        #  helpText(
+        #    "Create demographic maps with information from the 2010 US census."
+        #  ),
+          
+          # selectInput(
+          #  "var",
+          #  "Choose a variable to display",
+         #   choices = c("Percent White", "Percent Black", "Percent Hispanic", "Percent Asian"),
+        #    selected = "Percent White"
+          #),
+          
+          # sliderInput(
+            #"vals",
+            #"Range of Interest",
+           # min = 0,
+          #  max = 100,
+         #   value = c(0,100)
+        #  ),
+       # ),
+      #  card(
+     #     plotOutput("map")
+    #    )
+   #   )
+  #  )
+ # ),
   nav_panel(
     title = "Maps", 
     p("Maps of OOD"),
