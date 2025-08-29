@@ -105,7 +105,7 @@ ui <- page_navbar(
        selectInput(
          "ODorCount",
          "Select Overdose Count or Rate",
-         choices = c("Overdose Count", "Overdose Rate"),
+         choices = c("Overdose Rate", "Overdose Count"),
          selected = "Overdose Rate"
        ),
        selectInput(
@@ -150,6 +150,7 @@ ui <- page_navbar(
   nav_panel(
     title = "Sources", 
     p("Thanks Tom and rstudio documentation!"),
+    p("Counties with 10 or fewer overdose deaths are suppresed to protect decedent & family anonymity")
   ),
   nav_spacer(),
   nav_menu(
@@ -180,21 +181,40 @@ server <- function(input, output, session) {
     }
   )
   
+  legend_title <- reactive({
+    req(input$year, input$ODorCount)
+    year <- input$year
+    whichValue <- input$ODorCount
+    paste0(whichValue, ", ", year)
+  })
+  
+  reactive_maximum <- reactive({
+    values <- as.numeric(map_data()[[2]])
+    maximum = max(values, na.rm = TRUE)
+    minimum = min(values, na.rm = TRUE)
+    cat("mininum in reactive fxn is: ", minimum, "\n")
+    cat("maximum in reactive fxn is: ", maximum, "\n")
+    max(values, na.rm = TRUE)
+  })
+  
   reactive_pal <- reactive({
+    maximum = reactive_maximum()
+    cat("passed maximum is: ", maximum, "\n")
+    values <- as.numeric(map_data()[[2]])
     vals <- map_data()[[2]]
-    print(vals)
+    range = range(vals, na.rm = TRUE)
+    cat("range is: ", range, "\n")
     colorBin(
       "Oranges", 
-      domain = vals, 
+      domain = values, 
       bins = 5,
-      #pretty = TRUE,
-      na.color = "grey")
+      pretty = FALSE,
+      na.color = "white")
   })
   
   popups_2 <- reactive({
     vals <- map_data()[[2]]
     name <- map_data()[[1]]
-    
     labels <- paste0(
       name, "<br/>", vals
     )
@@ -204,6 +224,11 @@ server <- function(input, output, session) {
   
   output$leaflet_map <- renderLeaflet({
     pal <- reactive_pal()
+    legend_title <- legend_title()
+    maximum <- reactive_maximum()
+    valuesForLegend = map_data()[[2]]
+    str(valuesForLegend)
+    class(legend_title)
       leaflet(map_data()) %>%
       setView(lng = -98.274923, lat =  38.904775, zoom = 4) %>% 
       addPolygons(data = States,
@@ -218,24 +243,14 @@ server <- function(input, output, session) {
                     fillOpacity = 0.8) %>%
       addLegend(
         pal = reactive_pal(),
-        values = map_data()[[2]],
-        position = "bottomright"
+        values = valuesForLegend,
+        #str(valuesForLegend),
+        #cat("values for legend in leaflet: ", valuesForLegend),
+        position = "bottomright",
+        title = legend_title,
+        na.label = "Insufficient Data - see 'Sources' Tab"
       )
-    
   })
-  
-  
-  
-  # pseudocode re: how to query by clicking // selecting a state
-  # 2 options: 
-  # 1: user selects state in the dropdown
-  # 2: user clicks on state
-  # 1: server fxn - output$popup is a card that contains the info they're looking for
-    # zooms to state
-  # 2: the popup thing contains some sort of reference to another table that has links to 
-  #.   the info they're looking for
-  # labels = sprintf("<strong>Label</strong><br/>%s",
-    #.   States$NAME, "<br/>%s", tabelwithdata$LINK where states$name = table$name) %>% lapply(htmltools::HTML)
   
   toggleModal(session, "BS", toggle = "toggle")
   
